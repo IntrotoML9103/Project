@@ -1,22 +1,113 @@
-# Project
-Description: 
-This machine learning project was inspired by my senior seminar paper in undergrad. I decided to explore the idea of utilizing a machine learning model to analyze the painting styles of famous painters. The model takes in paintings, learns the distinct features of each artist's style, and can then predict the painter of an unknown painting. In the future, I aim to expand this into a comprehensive model where users can input their own paintings—especially those created in an attempt to replicate another artist's style—and the model will accurately identify the artist they were emulating. 
+# Artist ML
 
-# Milestone 1:
-I would like to build something that is able to predict what kind of artist's style is being used when given a certain art piece. I want to do this since, I wrote a senior paper relevant to this topic a couple years ago. I wanted to used CNNs and AlexNet and ResNet systems to be able recognize the painting styles and having used some other algorithms I want to see how I can potentially do this with using PCAs and Classifiers. I think this might be too passionate of a project to achieve but I would like to atleast start trying to analyzing paint color schemes and try to associate them to an aritist. I think for the data sets, I would use the online databases with famous artists' paintings. I beleive it would be good to have both a training and a test dataset. So that I can compare to see how different artists can be identied just because the parameters are based on things that aren't really quantified. I would like to use CNNs if I can'e achieve this with what we have used so far or similar neural networks. I think this would be for artists and museum curators who might be trying to replicate or categorize paintings and understand how and why certain patterns are more prevelent in some paintings. Link to the paper I wrote: https://docs.google.com/document/d/1ckeTTWlMAUzq9nRwfzjqYiv-oHZ-QTZr11AeugRN4DU/edit?tab=t.0 
+**Who painted *that*?** A deep learning model that identifies the artist behind a painting, wrapped in a FastAPI backend and a React frontend.
 
-# Milestone 2:
-To ensure I could actually pursue this project, I needed to find a database that would fit the requirements of my model. This meant finding hundreds of paintings by various artists, all compiled in one place. I scoured the internet for such a database since couldn’t use the one from my senior seminar paper since it didn’t contain nearly enough images. Eventually, I found a promising dataset on Kaggle: Collections of Paintings from 50 Artists(https://www.kaggle.com/code/paultimothymooney/collections-of-paintings-from-50-artists). After discussing with my professor, Thiago Hersan, we agreed to use only painters with over 100 paintings to ensure the model is accurately trained.
+Upload any painting and a fine-tuned ResNet34 will guess the painter — trained on thousands of works from dozens of famous artists, from Van Gogh to Vermeer.
 
-# Milestone 3: 
-Now that I had enough data to start coding my project, I began working with my professor to understand the key elements I needed in my code and how to approach the project. Through weekly assignments and homework, I had developed a basic understanding of the model I would use RESNET and the convolutional layers required for feature extraction. However, I wasn’t entirely sure what additional steps were necessary to process such a large dataset. Since I wasn’t performing any color analysis, I didn’t need to work with PCAs. After a meeting with my professor, I was able to outline the pseudocode, which gave me a solid foundation to start coding the project.
- 
-# Milestone 4: 
-This week, I primarily focused on data processing to prepare my model, extract features, and verify its accuracy while identifying any potential issues. I ran into several problems due to the large size of my dataset. The images were so big that my program wouldn’t run properly, and the kernel kept crashing. To resolve this, I resized the images, which allowed the program to run without further issues. Once the images were processed, I was able to split them into train and test files and successfully put them through the model.
+---
 
-# Milestone 5(Last): 
-After training the model, I was able to evaluate its accuracy and visualize the various layers through which the images were processed to extract features. I further analyzed the model’s predictions by testing it with specific images, which allowed me to compare its performance between two different artists. This was particularly interesting as it shed light on why the model might be misclassifying certain paintings.
+## Background
 
-Currently, the model’s error rate is around 0.3–0.4, depending on the random shuffle. While part of this error could be reduced by providing the model with more data, I am currently limited by kernel revisions and computational resources. In the future, I aim to lower the error rate further.
+This project started as a senior seminar paper in my undergrad, where I explored whether a machine learning model could learn the visual signatures that distinguish one painter from another. Back then I was limited to small datasets and classical algorithms, so I only scratched the surface of what was possible.
 
-Ultimately, I hope to develop this project into an application capable of identifying artistic styles and attributing them to specific painters.
+I came back to the idea in my Intro to ML course with the goal of doing it properly:
+
+- **Milestone 1 — The idea.** Predict an artist's style from a painting using CNNs instead of the classifiers I'd used before.
+- **Milestone 2 — The data.** Found the [Collections of Paintings from 50 Artists](https://www.kaggle.com/code/paultimothymooney/collections-of-paintings-from-50-artists) dataset on Kaggle. With my professor's guidance, we decided to only keep painters with 100+ works so the model had enough examples of each style.
+- **Milestone 3 — The approach.** Settled on transfer learning with ResNet34 — use a CNN already trained on ImageNet and fine-tune it to recognize painters.
+- **Milestone 4 — Preprocessing pain.** The raw images were enormous and kept crashing the kernel. Resizing them fixed training.
+- **Milestone 5 — Evaluation.** Trained the model, visualized the convolutional feature maps, and analyzed which artists it confused most often.
+
+This repo takes that notebook project and turns it into a real end-to-end application: a standalone training script, a Python API that serves predictions, and a React frontend where you can actually drop in a painting and see the top guesses.
+
+My long-term goal is a tool that helps artists, students, and curators recognize stylistic influence — not just *who* painted something, but *whose style* a new work is emulating.
+
+---
+
+## Architecture
+
+```
+Artist_ML/
+├── imgs/                    # Painting dataset (filename: Artist_Name_###.jpg)
+├── train_and_save.py        # Standalone training script (run once)
+├── backend/
+│   ├── main.py              # FastAPI server (/info, /predict)
+│   ├── requirements.txt
+│   └── model/               # Generated: artist_resnet.pth + labels.json
+├── frontend/                # Vite + React + Tailwind
+│   └── src/
+│       ├── App.jsx
+│       ├── api.js
+│       └── components/      # Hero, Demo, HowItWorks, Metrics, About, ...
+└── final.ipynb              # Original exploration notebook
+```
+
+**Tech stack:** PyTorch · torchvision · ResNet34 · FastAPI · React · Vite · Tailwind CSS
+
+---
+
+## Getting started
+
+You'll need **Python 3.10+** and **Node.js 18+**.
+
+### 1. Train the model (one time)
+
+The trained weights aren't committed to the repo (too large), so you have to produce them once from the dataset in `imgs/`.
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install torch torchvision pillow
+python train_and_save.py
+```
+
+This fine-tunes a pretrained ResNet34 on the paintings and writes:
+
+- `backend/model/artist_resnet.pth` — trained weights
+- `backend/model/labels.json` — artist list, test accuracy, and metadata
+
+Training takes a while (10 epochs by default). You can tweak `EPOCHS`, `BATCH_SIZE`, and `MIN_PAINTINGS_PER_ARTIST` at the top of `train_and_save.py`.
+
+### 2. Run the backend
+
+```bash
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --reload --port 8000
+```
+
+Sanity check: open http://localhost:8000/info — you should see a JSON response listing the artists and the model's test accuracy.
+
+Endpoints:
+
+- `GET  /info` — model metadata and list of artists
+- `POST /predict` — multipart upload (`file` field), returns top-k predictions
+
+### 3. Run the frontend
+
+In a new terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:5173. Drag in a painting, hit **Identify the artist**, and watch the top-5 predictions come back with confidence bars.
+
+---
+
+## How it works
+
+1. **Dataset curation** — Paintings are loaded from `imgs/`, and artists with fewer than 100 works are dropped so the model isn't starved on rare classes.
+2. **Preprocessing** — Each image is resized to 224×224 and normalized with ImageNet statistics so the pretrained ResNet sees inputs in its expected distribution.
+3. **Transfer learning** — `torchvision.models.resnet34` is loaded with ImageNet weights, and its final fully-connected layer is replaced with one sized to the number of kept artists.
+4. **Training** — Cross-entropy with class-balanced weights (to handle imbalance) + Adam, with the best checkpoint saved by test accuracy.
+5. **Serving** — The FastAPI app loads the weights once at startup and applies the same eval-time transforms to incoming uploads before running them through the model.
+
+---
+
+## Acknowledgements
+
+- Dataset: [Collections of Paintings from 50 Artists](https://www.kaggle.com/code/paultimothymooney/collections-of-paintings-from-50-artists) by Paul Mooney on Kaggle
+- Thanks to Professor Thiago Hersan for guidance through every milestone of this project
+- Inspired by my undergrad senior seminar paper on computational analysis of painting styles
