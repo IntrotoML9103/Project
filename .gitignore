@@ -1,0 +1,16 @@
+*.py.1
+.DS_Store
+__pycache__
+
+# Python
+.venv/
+venv/
+*.pyc
+
+# Trained model artifacts (too large for git)
+backend/model/*.pth
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
